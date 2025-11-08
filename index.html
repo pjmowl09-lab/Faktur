@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta name="crossorigin" content="anonymous">
+<meta charset="UTF-8">
+<title>FAKTUR PENJUALAN - PT. PUTRA JAYA MEDAN</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+body { font-family: Arial, sans-serif; margin: 30px; }
+#faktur { width: 100%; max-width: 800px; margin: auto; }
+img.kop { width: 100%; }
+h3 { text-align:center; margin:5px 0; }
+table { width:100%; border-collapse:collapse; margin-top:12px; }
+table, th, td { border:1px solid #000; font-size:12px; }
+th, td { padding:5px; }
+.center { text-align:center; }
+.right { text-align:right; }
+.btn { padding:7px 12px; cursor:pointer; margin-right:5px; }
+
+/* INPUT & TEXTAREA TANPA GARIS SAMA SEKALI */
+.input-flat {
+    border:none !important;
+    outline:none !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    resize:none;
+    font-size:14px;
+}
+
+/* HILANGKAN TOMBOL & GARIS INPUT SAAT PDF */
+#faktur {
+    position: relative;
+    min-height: 1000px; /* supaya ada ruang untuk footer */
+    padding-bottom: 220px; /* kasih ruang agar footer gambar tidak menimpa teks */
+}
+
+.footer-img {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+}
+
+#faktur.noborder input,
+#faktur.noborder textarea {
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+}
+#faktur.noborder .no-print,
+#faktur.noborder button {
+    display:none !important;
+}
+</style>
+</head>
+<body>
+
+<div id="faktur">
+<img src="https://raw.githubusercontent.com/pjmowl09-lab/gambar/92d94c961bdc52673d201be0f585df02ad9b94a6/kop.jpg" class="kop" crossorigin="anonymous">
+<h3>FAKTUR PENJUALAN</h3>
+
+<div style="text-align:center; font-size:14px; margin-top:3px;">
+    <b>Nomor :</b> <input id="nomor_faktur" class="input-flat" style="text-align:left;">
+</div>
+<br>
+<div style="display:flex; justify-content:space-between; margin-top:12px;">
+
+    <div style="width:55%; font-size:14px;">
+        <b>Kepada Yth:</b><br>
+        <div id="penerima" class="input-flat" contenteditable="true" 
+     style="width:100%; height:80px; white-space:pre-line; overflow:auto; border:1px solid transparent;">
+</div>
+    </div>
+
+    <div style="width:40%; font-size:14px; display:grid; grid-template-columns:100px 1fr; row-gap:6px; align-items:center;">
+    <div>Tanggal</div>
+    <div>: <span id="tanggal_text" class="input-flat" style="font-weight:bold;"></span>
+        <button onclick="showCalendar()" style="margin-left:6px;">📅</button>
+    </div>
+    <div>Cara Bayar</div>
+    <div>: <input id="cara_bayar" class="input-flat" value="Kredit 30 Hari" style="width:50%;">
+    </div>
+
+    <div>Nomor PO</div>
+    <div>: <input id="no_po" class="input-flat" value="-" style="width:50%;">
+    </div>
+</div>
+
+
+</div>
+
+<input id="tanggal" type="text" class="input-flat" style="display:none;">
+
+<table id="tabelBarang">
+<thead>
+<tr class="center">
+    <th style="width:5%;">No</th>
+    <th style="width:30%;">Nama Barang</th>
+    <th style="width:15%; text-align:center;">Merk</th>
+    <th style="width:15%; text-align:center;">Jumlah</th>
+    <th style="width:15%;">Harga Satuan</th>
+    <th style="width:20%;">Total Harga</th>
+</tr>
+</thead>
+<tbody></tbody>
+
+<tfoot>
+<tr>
+<td colspan="4" rowspan="3" style="padding:6px; vertical-align:middle;">
+<div style="display:flex; align-items:flex-start;">
+  <div style="white-space:nowrap; font-weight:bold;">Terbilang :</div>
+  <div id="terbilang" style="margin-left:6px; text-align:justify; word-break:break-word;"></div>
+</div>
+</td>
+    <td class="right"><b>TOTAL HARGA :</b></td>
+    <td class="right" id="subtotal">Rp.0,-</td>
+</tr>
+
+<tr>
+    <td class="right"><b>PPN :</b></td>
+    <td class="right" id="ppn">Rp.0,-</td>
+</tr>
+
+<tr>
+    <td class="right" style="border-top:2px solid #000;"><b>GRAND TOTAL :</b></td>
+    <td class="right" id="grandtotal" style="border-top:2px solid #000;"><b>Rp.0,-</b></td>
+</tr>
+</tfoot>
+</table>
+
+<div class="no-print" style="margin-top:8px;">
+<button class="btn" onclick="tambahBaris()">+ Tambah Barang</button>
+<button class="btn" onclick="hapusBaris()">- Hapus Barang</button>
+</div>
+<!-- BAGIAN PENUTUP -->
+<div style="display:flex; justify-content:space-between; margin-top:40px; font-size:14px;">
+<div style="width:45%; text-align:center;"><br><br>
+    <b>Penerima</b><br><br><br>
+    ( .................................... )
+</div>
+
+<div style="width:45%; text-align:center;">
+<img src="https://raw.githubusercontent.com/pjmowl09-lab/gambar/main/ttd.png" crossorigin="anonymous" alt="Tanda Tangan" style="width:220px;"><br>
+</div>
+</div>
+<br></br>
+
+<div style="margin-top:25px; font-size:14px;">
+<b>Pembayaran dapat dilakukan melalui:</b>
+<div style="display:grid; grid-template-columns:120px auto; margin-top:4px; row-gap:4px;">
+    <div>Bank</div>
+    <div>: Mandiri</div>
+
+    <div>No. Rekening</div>
+    <div>: <b>105-00-1789292-2</b> (KCP. Medan-Johor City)</div>
+
+    <div>Atas Nama</div>
+    <div>: <b>PUTRA JAYA MEDAN</b></div>
+</div>
+</div>
+<div class="footer-img">
+<img src="https://raw.githubusercontent.com/pjmowl09-lab/gambar/main/footer.png" 
+     crossorigin="anonymous"
+     alt="Footer PT. Putra Jaya Medan" 
+     style="width:100%; max-width:750px;">
+</div>
+</div>
+
+<button class="btn no-print" onclick="generatePDF()">Download PDF</button>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+
+// FORMAT
+function formatRibuan(v){return v.replace(/\D/g,"").replace(/\B(?=(\d{3})+(?!\d))/g,".");}
+
+// ANGKA → KATA
+function angkaKeKata(n){
+    const s=["","satu","dua","tiga","empat","lima","enam","tujuh","delapan","sembilan","sepuluh","sebelas"];
+    function t(x){
+        if(x<12)return s[x];
+        if(x<20)return s[x-10]+" belas";
+        if(x<100)return t(x/10|0)+" puluh "+t(x%10);
+        if(x<200)return "seratus "+t(x-100);
+        if(x<1000)return t(x/100|0)+" ratus "+t(x%100);
+        if(x<2000)return "seribu "+t(x-1000);
+        if(x<1e6)return t(x/1e3|0)+" ribu "+t(x%1e3);
+        if(x<1e9)return t(x/1e6|0)+" juta "+t(x%1e6);
+        return "";
+    }
+    let h=(t(n).trim()+" rupiah.").replace(/\s+/g," ");
+    return h.charAt(0).toUpperCase()+h.slice(1);
+}
+
+// TABEL
+function tambahBaris(){
+    const tb=document.querySelector("#tabelBarang tbody");
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+    <td class="center"></td>
+    <td><input class="input-flat nama" style="width:100%"></td>
+    <td class="center"><input class="input-flat merk" style="width:100%; text-align:center;"></td>
+    <td class="center"><input class="input-flat qty" style="width:100%; text-align:center;"placeholder="1 / 1 Unit / 1 Pcs"></td>
+    <td class="right"><input class="input-flat harga" style="width:100%; text-align:right;" placeholder="Rp 0"></td>
+    <td class="right total">Rp.0,-</td>`;
+    tb.appendChild(tr);
+    tr.querySelectorAll("input").forEach(i=>i.oninput=update);
+    update();
+}
+
+function hapusBaris(){
+    const tb=document.querySelector("#tabelBarang tbody");
+    if(tb.rows.length>0) tb.deleteRow(-1);
+    update();
+}
+
+function update(){
+    let subtotal=0;
+    document.querySelectorAll("#tabelBarang tbody tr").forEach((tr,i)=>{
+      tr.children[0].innerText = (i + 1) + ".";
+
+        let qty=parseFloat(tr.querySelector(".qty").value.replace(/[^0-9]/g,""))||0;
+
+        let hargaField=tr.querySelector(".harga");
+        let h=parseInt(hargaField.value.replace(/[^0-9]/g,""))||0;
+        hargaField.value="Rp "+formatRibuan(h.toString())+",-";
+
+        let total=qty*h;
+        subtotal+=total;
+        tr.querySelector(".total").innerText="Rp "+total.toLocaleString("id-ID")+",-";
+    });
+
+    let ppn=subtotal*0.11;
+    let grand=subtotal+ppn;
+
+    document.getElementById("subtotal").innerText="Rp "+subtotal.toLocaleString("id-ID")+",-";
+    document.getElementById("ppn").innerText="Rp "+ppn.toLocaleString("id-ID")+",-";
+    document.getElementById("grandtotal").innerText="Rp "+grand.toLocaleString("id-ID")+",-";
+    document.getElementById("terbilang").innerText=angkaKeKata(Math.round(grand));
+}
+
+// TANGGAL
+function formatTanggal(){
+    const m=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    let [y,mo,d]=document.getElementById("tanggal").value.split("-");
+    document.getElementById("tanggal_text").innerText=`${d} ${m[mo-1]} ${y}`;
+}
+flatpickr("#tanggal",{dateFormat:"Y-m-d",onChange:formatTanggal});
+function showCalendar(){document.querySelector("#tanggal")._flatpickr.open();}
+document.getElementById("tanggal").value=new Date().toISOString().split("T")[0];
+formatTanggal();
+
+
+// PDF
+async function generatePDF() {
+    const { jsPDF } = window.jspdf;
+    const faktur = document.getElementById("faktur");
+
+    faktur.classList.add("noborder"); // Hilangkan border input saat export
+    faktur.style.paddingBottom = "80px";
+
+
+    // Pastikan gambar kop sudah load
+    const images = faktur.querySelectorAll("img");
+    for (let img of images) {
+        if (!img.complete) {
+            await new Promise(resolve => img.onload = resolve);
+        }
+    }
+
+    const canvas = await html2canvas(faktur, {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#FFFFFF"
+    });
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.9);
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const pageWidth = pdf.internal.pageSize.getWidth();  // = 210mm
+    const pageHeight = pdf.internal.pageSize.getHeight(); // = 297mm
+
+    // === SET MARGIN ===
+    const margin = 10; // mm kiri & kanan
+    const contentWidth = pageWidth - (margin * 2);
+
+    const imgWidth = contentWidth;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+
+    // Jika tinggi lebih dari 1 halaman → split otomatis
+    let pos = 0;
+    let heightLeft = imgHeight;
+
+    pdf.addImage(imgData, "JPEG", margin, pos, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+        pdf.addPage();
+        pos = 0 - (imgHeight - heightLeft);
+        pdf.addImage(imgData, "JPEG", margin, pos, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+    }
+
+    pdf.save("FAKTUR-PENJUALAN.pdf");
+    faktur.classList.remove("noborder");
+    
+}
+
+tambahBaris();
+</script>
+
+</body>
+</html>
